@@ -1,5 +1,8 @@
 package me.jellysquid.mods.sodium.client.render.chunk.compile.tasks;
 
+import com.jozufozu.flywheel.Flywheel;
+import com.jozufozu.flywheel.api.FlywheelWorld;
+import com.jozufozu.flywheel.backend.instancing.InstancedRenderDispatcher;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import me.jellysquid.mods.sodium.client.SodiumClientMod;
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSection;
@@ -33,6 +36,7 @@ import net.minecraft.world.level.levelgen.SingleThreadedRandomSource;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.fml.loading.FMLLoader;
 import org.embeddedt.embeddium.api.ChunkDataBuiltEvent;
 import org.embeddedt.embeddium.chunk.MeshAppenderRenderer;
 import org.embeddedt.embeddium.model.ModelDataSnapshotter;
@@ -60,6 +64,8 @@ public class ChunkBuilderMeshingTask extends ChunkBuilderTask<ChunkBuildOutput> 
     private final Map<BlockPos, ModelData> modelDataMap;
 
     private Vec3 camera = Vec3.ZERO;
+
+    private boolean isFlywheelLoaded = FMLLoader.getLoadingModList().getModFileById("flywheel") != null;
 
     public ChunkBuilderMeshingTask(RenderSection render, ChunkRenderContext renderContext, int time) {
         this.render = render;
@@ -149,8 +155,14 @@ public class ChunkBuilderMeshingTask extends ChunkBuilderTask<ChunkBuildOutput> 
                             BlockEntity entity = slice.getBlockEntity(blockPos);
 
                             if (entity != null) {
-                                BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(entity);
-
+                                BlockEntityRenderer<BlockEntity> renderer = null;
+                                if (isFlywheelLoaded) {
+                                    if (!InstancedRenderDispatcher.tryAddBlockEntity(entity)) {
+                                        renderer = Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(entity);
+                                    }
+                                } else {
+                                    renderer = Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(entity);
+                                }
                                 if (renderer != null) {
                                     renderData.addBlockEntity(entity, !renderer.shouldRenderOffScreen(entity));
                                 }

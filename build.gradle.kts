@@ -139,6 +139,7 @@ dependencies {
     // Mods
     compatCompileOnly(fg.deobf("curse.maven:codechickenlib-242818:${"codechicken_fileid"()}"))
     compatCompileOnly(fg.deobf("curse.maven:immersiveengineering-231951:${"ie_fileid"()}"))
+    compileOnly(fg.deobf("com.jozufozu.flywheel:flywheel-forge-1.19.2:0.6.10-20"))
 
     // Fabric API
     compileOnly("net.fabricmc.fabric-api:fabric-api:${"fabric_version"()}")

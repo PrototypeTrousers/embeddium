@@ -1,5 +1,6 @@
 package me.jellysquid.mods.sodium.mixin.core.render.immediate.consumer;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
@@ -22,18 +23,16 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.nio.FloatBuffer;
+
 @Mixin(SheetedDecalTextureGenerator.class)
 public class OverlayVertexConsumerMixin implements VertexBufferWriter {
     @Shadow
     @Final
     private VertexConsumer delegate;
 
-    @Shadow
-    @Final
     private Matrix3f normalInversePose;
 
-    @Shadow
-    @Final
     private Matrix4f cameraInversePose;
 
     @Unique
@@ -43,8 +42,18 @@ public class OverlayVertexConsumerMixin implements VertexBufferWriter {
     private Quaternionf jomlQuaternion = new Quaternionf();
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void onInit(CallbackInfo ci) {
+    private void onInit(CallbackInfo ci, @Local(argsOnly = true) com.mojang.math.Matrix4f pCameraPose, @Local(argsOnly = true) com.mojang.math.Matrix3f pNormalPose) {
         this.isFullWriter = VertexBufferWriter.tryOf(this.delegate) != null;
+        FloatBuffer fb = FloatBuffer.allocate(64);
+        pCameraPose.store(fb);
+        fb.rewind();
+        this.cameraInversePose = new Matrix4f(fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get());
+        fb.rewind();
+        this.cameraInversePose.invert();
+        pNormalPose.store(fb);
+        fb.rewind();
+        this.normalInversePose = new Matrix3f(fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get(),fb.get());
+        this.normalInversePose.invert();
     }
 
     @Override
